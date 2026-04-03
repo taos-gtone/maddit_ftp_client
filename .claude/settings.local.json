@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E '\\\\.\\(json|js|ts|yml|yaml|config|rc\\)$|package\\\\.json|tsconfig|vite|webpack')",
+      "Bash(npm install:*)",
+      "Bash(npx vite:*)",
+      "Bash(timeout 8 npx electron .)",
+      "Bash(npx electron:*)",
+      "Bash(node -e \"console.log\\(require.resolve\\('electron'\\)\\)\")",
+      "Bash(node -e \"const e = require\\('electron'\\); console.log\\(typeof e, Object.keys\\(e\\)\\)\")",
+      "Bash(node_modules/.bin/electron -v)",
+      "Bash(node_modules/electron/dist/electron.exe --version)",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/electron/package.json'\\).version\\)\")",
+      "Bash(c:/projects/maddit_ftp_client/node_modules/electron/dist/electron.exe --no-sandbox -v)",
+      "Bash(c:/maddit_image_editor/node_modules/electron/dist/electron.exe --version)",
+      "Bash(gh auth:*)",
+      "Bash(gh.exe auth:*)",
+      "Bash(git --version)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git rm:*)"
+    ]
+  }
+}

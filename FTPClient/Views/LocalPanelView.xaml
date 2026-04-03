@@ -1,0 +1,113 @@
+<UserControl x:Class="FTPClient.Views.LocalPanelView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:FTPClient.Converters"
+             FontFamily="Gulimche, Gulim, Malgun Gothic">
+
+    <UserControl.Resources>
+        <conv:FileSizeConverter x:Key="FileSizeConverter"/>
+    </UserControl.Resources>
+
+    <DockPanel>
+        <!-- Header: Label -->
+        <Border DockPanel.Dock="Top" Style="{StaticResource PanelHeader}">
+            <TextBlock Text="로컬" FontWeight="SemiBold" FontSize="12" Margin="4,2"/>
+        </Border>
+
+        <!-- Path Bar -->
+        <Border DockPanel.Dock="Top" Background="{StaticResource SurfaceBrush}" Padding="4,3">
+            <DockPanel>
+                <ComboBox DockPanel.Dock="Left" Width="55" Margin="0,0,4,0"
+                          ItemsSource="{Binding Drives}"
+                          SelectedItem="{Binding SelectedDrive}"
+                          FontSize="11"/>
+                <Button DockPanel.Dock="Right" Content="↑" Width="26" Height="24"
+                        Style="{StaticResource ToolbarButton}"
+                        Command="{Binding NavigateUpCommand}" ToolTip="상위 폴더"/>
+                <Button DockPanel.Dock="Right" Content="⟳" Width="26" Height="24"
+                        Style="{StaticResource ToolbarButton}"
+                        Command="{Binding RefreshCommand}" ToolTip="새로고침" Margin="0,0,2,0"/>
+                <TextBox Text="{Binding CurrentPath, UpdateSourceTrigger=LostFocus}"
+                         VerticalContentAlignment="Center" FontSize="11"
+                         KeyDown="PathBox_KeyDown"/>
+            </DockPanel>
+        </Border>
+
+        <!-- Toolbar -->
+        <Border DockPanel.Dock="Top" Background="{StaticResource ToolbarBrush}" Padding="2,1">
+            <StackPanel Orientation="Horizontal">
+                <Button Content="새 폴더" Style="{StaticResource ToolbarButton}"
+                        Command="{Binding CreateDirectoryCommand}"/>
+                <Button Content="삭제" Style="{StaticResource ToolbarButton}"
+                        Command="{Binding DeleteCommand}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- File List -->
+        <ListView x:Name="FileListView"
+                  ItemsSource="{Binding Files}"
+                  SelectedItem="{Binding SelectedItem}"
+                  SelectionMode="Extended"
+                  MouseDoubleClick="FileList_MouseDoubleClick"
+                  GridViewColumnHeader.Click="ColumnHeader_Click"
+                  VirtualizingStackPanel.IsVirtualizing="True">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Width="28">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <Grid Width="16" Height="16">
+                                    <!-- Folder icon (yellow, Windows Explorer style) -->
+                                    <Canvas Visibility="{Binding IsDirectory, Converter={StaticResource BoolToVis}}">
+                                        <Path Data="M0,3 L0,14 H16 V5 H7 L5.5,3 Z"
+                                              Fill="#FFC107" Stroke="#E5A000" StrokeThickness="0.5"/>
+                                        <Path Data="M0,6 L2,14 H16 L14,6 Z"
+                                              Fill="#FFD54F" Stroke="#E5A000" StrokeThickness="0.5"/>
+                                    </Canvas>
+                                    <!-- File icon (light blue page) -->
+                                    <Canvas>
+                                        <Canvas.Style>
+                                            <Style TargetType="Canvas">
+                                                <Setter Property="Visibility" Value="Visible"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsDirectory}" Value="True">
+                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Canvas.Style>
+                                        <Path Data="M2,0 L10,0 L14,4 L14,16 L2,16 Z"
+                                              Fill="#E3F2FD" Stroke="#90CAF9" StrokeThickness="0.7"/>
+                                        <Path Data="M10,0 L10,4 L14,4"
+                                              Fill="#BBDEFB" Stroke="#90CAF9" StrokeThickness="0.5"/>
+                                    </Canvas>
+                                </Grid>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn x:Name="ColName" Header="이름" Width="220" DisplayMemberBinding="{Binding Name}"/>
+                    <GridViewColumn x:Name="ColSize" Header="크기" Width="90">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Size, Converter={StaticResource FileSizeConverter}}"
+                                           TextAlignment="Right" HorizontalAlignment="Right"/>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                    <GridViewColumn x:Name="ColDate" Header="수정일" Width="130"
+                                    DisplayMemberBinding="{Binding DisplayDate}"/>
+                </GridView>
+            </ListView.View>
+            <ListView.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="업로드" Click="Upload_Click" FontWeight="Bold"/>
+                    <Separator/>
+                    <MenuItem Header="새 폴더" Command="{Binding CreateDirectoryCommand}"/>
+                    <MenuItem Header="삭제" Command="{Binding DeleteCommand}"/>
+                    <Separator/>
+                    <MenuItem Header="새로고침" Command="{Binding RefreshCommand}"/>
+                </ContextMenu>
+            </ListView.ContextMenu>
+        </ListView>
+    </DockPanel>
+</UserControl>

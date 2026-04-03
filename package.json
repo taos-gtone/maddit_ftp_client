@@ -1,0 +1,82 @@
+{
+  "name": "maddit-ftp-client",
+  "version": "1.0.0",
+  "description": "Maddit FTP Client - FTP/SFTP file transfer tool",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev:vite": "npx vite",
+    "dev:electron": "npx wait-on http://localhost:5173 && npx electron . --dev",
+    "dev": "npx concurrently \"npm run dev:vite\" \"npm run dev:electron\"",
+    "start": "npx vite build && npx electron .",
+    "build": "npx vite build && npx electron-builder --win",
+    "build:vite": "npx vite build"
+  },
+  "keywords": [],
+  "author": "Maddit",
+  "license": "ISC",
+  "dependencies": {
+    "basic-ftp": "^5.0.5",
+    "ssh2-sftp-client": "^11.0.0"
+  },
+  "devDependencies": {
+    "electron": "^32.3.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/ssh2-sftp-client": "^9.0.4",
+    "@vitejs/plugin-react": "^4.7.0",
+    "autoprefixer": "^10.4.27",
+    "concurrently": "^9.2.1",
+    "electron-builder": "^26.8.1",
+    "postcss": "^8.5.8",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^6.0.2",
+    "vite": "^5.4.21",
+    "wait-on": "^9.0.4"
+  },
+  "build": {
+    "appId": "co.kr.maddit.ftp-client",
+    "productName": "Maddit FTP Client",
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "public/icon.ico",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "include": "build/installer.nsh"
+    },
+    "files": [
+      "app-dist/**/*",
+      "electron/**/*",
+      "node_modules/basic-ftp/**/*",
+      "node_modules/ssh2-sftp-client/**/*",
+      "node_modules/ssh2/**/*",
+      "node_modules/cpu-features/**/*",
+      "!**/*.md",
+      "!**/LICENSE*",
+      "!**/CHANGELOG*",
+      "!**/README*",
+      "!**/*.map",
+      "!**/test/**",
+      "!**/docs/**",
+      "!**/*.d.ts",
+      "!**/*.ts"
+    ],
+    "asarUnpack": [
+      "node_modules/cpu-features/**/*.node",
+      "node_modules/ssh2/**/*.node"
+    ],
+    "compression": "maximum"
+  }
+}

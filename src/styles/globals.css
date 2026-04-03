@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+/* Body */
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #ffffff;
+  font-family: 'Gulimche', 'Gulim', 'Malgun Gothic', 'Segoe UI', sans-serif;
+  font-size: 12px;
+}
+
+/* Focus ring */
+*:focus-visible {
+  outline: 2px solid #0078D7;
+  outline-offset: 1px;
+}
+
+/* Remove number input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Context menu animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.context-menu-enter {
+  animation: fadeIn 0.15s ease;
+}
+
+/* Progress bar */
+.progress-bar {
+  height: 16px;
+  background: #F5F5F5;
+  border: 1px solid #D0D0D0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: #0078D7;
+  transition: width 0.2s ease;
+}

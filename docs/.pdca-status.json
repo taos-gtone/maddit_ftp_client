@@ -1,0 +1,361 @@
+{
+  "version": "2.0",
+  "lastUpdated": "2026-04-02T03:15:42.038Z",
+  "activeFeatures": [
+    "Services",
+    "ViewModels",
+    "Views",
+    "maddit_ftp_client",
+    "electron"
+  ],
+  "primaryFeature": "Services",
+  "features": {
+    "Services": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-20T00:15:17.756Z",
+        "lastUpdated": "2026-02-20T00:16:58.237Z"
+      },
+      "lastFile": "/c/dev_win_app/FTPClient/FTPClient/Services/SftpFileService.cs"
+    },
+    "ViewModels": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-20T00:18:09.904Z",
+        "lastUpdated": "2026-02-20T00:18:09.904Z"
+      },
+      "lastFile": "/c/dev_win_app/FTPClient/FTPClient/ViewModels/MainViewModel.cs"
+    },
+    "Views": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-20T00:18:59.180Z",
+        "lastUpdated": "2026-02-20T00:24:55.984Z"
+      },
+      "lastFile": "/c/dev_win_app/FTPClient/FTPClient/Views/RemotePanelView.xaml.cs"
+    },
+    "maddit_ftp_client": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-02T00:10:56.186Z",
+        "lastUpdated": "2026-04-02T03:15:42.038Z"
+      },
+      "lastFile": "c:\\projects\\maddit_ftp_client\\src\\components\\TitleBar.tsx"
+    },
+    "electron": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-02T00:12:34.655Z",
+        "lastUpdated": "2026-04-02T00:12:49.492Z"
+      },
+      "lastFile": "c:\\projects\\maddit_ftp_client\\electron\\preload.js"
+    }
+  },
+  "pipeline": {
+    "currentPhase": 1,
+    "level": "Dynamic",
+    "phaseHistory": []
+  },
+  "session": {
+    "startedAt": "2026-02-19T00:38:35.379Z",
+    "onboardingCompleted": false,
+    "lastActivity": "2026-04-02T03:15:42.038Z"
+  },
+  "history": [
+    {
+      "timestamp": "2026-02-20T00:15:17.756Z",
+      "feature": "Services",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-20T00:16:28.968Z",
+      "feature": "Services",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-20T00:16:58.237Z",
+      "feature": "Services",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-20T00:18:09.904Z",
+      "feature": "ViewModels",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-20T00:18:59.180Z",
+      "feature": "Views",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-20T00:20:21.327Z",
+      "feature": "Views",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-20T00:24:55.984Z",
+      "feature": "Views",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:10:56.186Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:10:59.117Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:11:00.559Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:12:34.655Z",
+      "feature": "electron",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:12:49.492Z",
+      "feature": "electron",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:13:14.238Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:13:15.678Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:13:17.121Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:13:54.788Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:14:04.561Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:14:12.130Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:14:31.733Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:14:42.485Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:14:48.515Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:15:19.094Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:15:28.039Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:16:00.948Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:17:25.699Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:36:36.261Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:36:49.418Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:37:20.471Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:37:37.901Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:39:04.260Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:56:48.665Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:57:09.957Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:57:18.374Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:57:33.864Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T00:57:48.297Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:30:49.116Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:32:28.247Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:32:38.424Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:32:57.990Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:33:08.032Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:33:16.376Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:33:26.176Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T02:54:12.687Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T02:54:14.446Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T03:15:42.038Z",
+      "feature": "maddit_ftp_client",
+      "phase": "do",
+      "action": "updated"
+    }
+  ]
+}
