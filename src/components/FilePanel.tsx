@@ -11,12 +11,12 @@ function formatSize(bytes: number): string {
 function formatDate(isoStr: string): string {
   if (!isoStr) return '';
   const d = new Date(isoStr);
-  const yyyy = d.getFullYear();
+  if (isNaN(d.getTime())) return '';
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
   const hh = String(d.getHours()).padStart(2, '0');
   const mi = String(d.getMinutes()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+  return `${d.getFullYear()}-${mm}-${dd} ${hh}:${mi}`;
 }
 
 export interface ContextMenuAction {
@@ -45,7 +45,7 @@ interface Props {
   onSort: (column: SortColumn) => void;
   onRefresh: () => void;
   onCreateDir: () => void;
-  onDelete: (item: FileItem) => void;
+  onDelete: (items: FileItem[]) => void;
   onSelectionChange: (items: FileItem[]) => void;
   onContextAction?: (action: string, items: FileItem[]) => void;
 }
@@ -61,6 +61,62 @@ export default function FilePanel({
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
   const lastClickedIndexRef = useRef<number>(-1);
   const panelRef = useRef<HTMLDivElement>(null);
+
+  // Resizable column widths (px)
+  // Min widths ensure header text + sort indicator are always visible
+  const MIN_SIZE = 52;   // "크기 ▲"
+  const MIN_DATE = 64;   // "수정일 ▲"
+  const MIN_PERM = 44;   // "권한"
+  const [colSizeW, setColSizeW] = useState(96);
+  const [colDateW, setColDateW] = useState(144);
+  const [colPermW, setColPermW] = useState(96);
+  // border = "name|size", "size|date", "date|perm"
+  const dragRef = useRef<{ border: string; startX: number; leftW: number; rightW: number } | null>(null);
+
+  function getMinW(col: string): number {
+    if (col === 'size') return MIN_SIZE;
+    if (col === 'date') return MIN_DATE;
+    if (col === 'perm') return MIN_PERM;
+    return 60;
+  }
+
+  // Column resize drag - adjusts both left and right columns
+  useEffect(() => {
+    function onMouseMove(e: MouseEvent) {
+      if (!dragRef.current) return;
+      e.preventDefault();
+      const b = dragRef.current.border;
+      const [leftCol, rightCol] = b.split('|');
+      const minL = getMinW(leftCol);
+      const minR = getMinW(rightCol);
+      const delta = e.clientX - dragRef.current.startX;
+      const newLeftW = Math.max(minL, dragRef.current.leftW + delta);
+      const newRightW = Math.max(minR, dragRef.current.rightW - delta);
+      if (newLeftW <= minL && delta > 0 && newRightW <= minR) return;
+      if (b === 'name|size') {
+        setColSizeW(Math.max(minR, newRightW));
+      } else if (b === 'size|date') {
+        setColSizeW(Math.max(minL, newLeftW));
+        setColDateW(Math.max(minR, newRightW));
+      } else if (b === 'date|perm') {
+        setColDateW(Math.max(minL, newLeftW));
+        setColPermW(Math.max(minR, newRightW));
+      }
+    }
+    function onMouseUp() { dragRef.current = null; }
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+    return () => {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+  }, []);
+
+  function startResize(border: string, leftW: number, rightW: number, e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    dragRef.current = { border, startX: e.clientX, leftW, rightW };
+  }
 
   // 패널 외부 클릭 시 컨텍스트 메뉴 닫기
   useEffect(() => {
@@ -93,12 +149,10 @@ export default function FilePanel({
     const idx = getFileIndex(item);
 
     if (e.shiftKey && lastClickedIndexRef.current >= 0) {
-      // Shift+클릭: 범위 선택
       const start = Math.min(lastClickedIndexRef.current, idx);
       const end = Math.max(lastClickedIndexRef.current, idx);
       const rangeItems = selectableFiles.slice(start, end + 1);
       if (e.ctrlKey) {
-        // Ctrl+Shift: 기존 선택에 범위 추가
         const merged = [...selectedItems];
         for (const ri of rangeItems) {
           if (!merged.some(s => s.fullPath === ri.fullPath)) merged.push(ri);
@@ -108,7 +162,6 @@ export default function FilePanel({
         onSelectionChange(rangeItems);
       }
     } else if (e.ctrlKey) {
-      // Ctrl+클릭: 토글 선택
       const isSelected = selectedItems.some(s => s.fullPath === item.fullPath);
       if (isSelected) {
         onSelectionChange(selectedItems.filter(s => s.fullPath !== item.fullPath));
@@ -117,7 +170,6 @@ export default function FilePanel({
       }
       lastClickedIndexRef.current = idx;
     } else {
-      // 일반 클릭: 단일 선택
       onSelectionChange([item]);
       lastClickedIndexRef.current = idx;
     }
@@ -129,13 +181,11 @@ export default function FilePanel({
 
     if (item.isParentDirectory) return;
 
-    // 우클릭한 항목이 현재 선택에 없으면, 해당 항목만 선택
     if (!selectedItems.some(s => s.fullPath === item.fullPath)) {
       onSelectionChange([item]);
       lastClickedIndexRef.current = getFileIndex(item);
     }
 
-    // 패널 기준 좌표 계산
     const rect = panelRef.current?.getBoundingClientRect();
     const x = e.clientX - (rect?.left ?? 0);
     const y = e.clientY - (rect?.top ?? 0);
@@ -149,17 +199,24 @@ export default function FilePanel({
   }
 
   function handleDeleteClick() {
-    const item = selectedItems.find(s => !s.isParentDirectory);
-    if (item) onDelete(item);
+    const items = selectedItems.filter(s => !s.isParentDirectory);
+    if (items.length > 0) onDelete(items);
   }
 
-  // Ctrl+A 전체 선택
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.ctrlKey && e.key === 'a') {
       e.preventDefault();
       onSelectionChange(selectableFiles);
     }
   }
+
+  // Resize separator between header columns
+  const colSep = (border: string, leftW: number, rightW: number) => (
+    <div
+      className="shrink-0 w-[3px] self-stretch cursor-col-resize bg-border hover:bg-primary active:bg-primary"
+      onMouseDown={e => startResize(border, leftW, rightW, e)}
+    />
+  );
 
   return (
     <div
@@ -214,18 +271,25 @@ export default function FilePanel({
         </button>
       </div>
 
-      {/* Column Headers */}
+      {/* Column Headers - resizable */}
       <div className="h-6 bg-surface border-b border-border flex items-center text-xs font-semibold text-text shrink-0 select-none">
-        <div className="flex-1 px-2 cursor-pointer hover:bg-hover" onClick={() => onSort('name')}>
+        <div className="flex-1 px-2 cursor-pointer hover:bg-hover min-w-[60px] text-center truncate" onClick={() => onSort('name')}>
           이름{sortIndicator('name')}
         </div>
-        <div className="w-24 px-2 text-right cursor-pointer hover:bg-hover" onClick={() => onSort('size')}>
+        {colSep('name|size', 0, colSizeW)}
+        <div className="px-2 cursor-pointer hover:bg-hover text-center truncate" style={{ width: colSizeW }} onClick={() => onSort('size')}>
           크기{sortIndicator('size')}
         </div>
-        <div className="w-36 px-2 cursor-pointer hover:bg-hover" onClick={() => onSort('date')}>
+        {colSep('size|date', colSizeW, colDateW)}
+        <div className="px-2 cursor-pointer hover:bg-hover text-center truncate" style={{ width: colDateW }} onClick={() => onSort('date')}>
           수정일{sortIndicator('date')}
         </div>
-        {showPermissions && <div className="w-20 px-2">권한</div>}
+        {showPermissions && colSep('date|perm', colDateW, colPermW)}
+        {showPermissions && (
+          <div className="px-2 text-center truncate" style={{ width: colPermW }}>
+            권한
+          </div>
+        )}
       </div>
 
       {/* File list */}
@@ -247,14 +311,14 @@ export default function FilePanel({
                 </span>
                 <span className="truncate">{item.name}</span>
               </div>
-              <div className="w-24 px-2 text-right text-text-sub shrink-0">
+              <div className="px-2 text-right text-text-sub shrink-0 truncate" style={{ width: colSizeW }}>
                 {item.isDirectory ? '' : formatSize(item.size)}
               </div>
-              <div className="w-36 px-2 text-text-sub shrink-0">
+              <div className="px-2 text-text-sub shrink-0 truncate" style={{ width: colDateW }}>
                 {item.isParentDirectory ? '' : formatDate(item.lastModified)}
               </div>
               {showPermissions && (
-                <div className="w-20 px-2 text-text-muted font-mono text-[10px] shrink-0">
+                <div className="px-2 text-text-sub shrink-0 truncate" style={{ width: colPermW }}>
                   {item.permissions || ''}
                 </div>
               )}

@@ -47,6 +47,7 @@ export interface Bookmark {
   profileId: string;
   localPath: string;
   remotePath: string;
+  syncBrowsing?: boolean;
 }
 
 export interface TransferProgressData {

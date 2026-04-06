@@ -41,6 +41,7 @@
     "directories": {
       "output": "release"
     },
+    "electronLanguages": ["ko", "en-US"],
     "win": {
       "target": [
         {
@@ -59,22 +60,31 @@
     "files": [
       "app-dist/**/*",
       "electron/**/*",
-      "node_modules/basic-ftp/**/*",
-      "node_modules/ssh2-sftp-client/**/*",
-      "node_modules/ssh2/**/*",
-      "node_modules/cpu-features/**/*",
+      "node_modules/basic-ftp/dist/**/*",
+      "node_modules/basic-ftp/package.json",
+      "node_modules/ssh2-sftp-client/src/**/*",
+      "node_modules/ssh2-sftp-client/package.json",
+      "node_modules/ssh2/lib/**/*",
+      "node_modules/ssh2/package.json",
+      "node_modules/ssh2/install.js",
+      "node_modules/ssh2-sftp-client/node_modules/**/*",
+      "node_modules/ssh2/node_modules/**/*",
       "!**/*.md",
+      "!**/*.org",
       "!**/LICENSE*",
       "!**/CHANGELOG*",
       "!**/README*",
       "!**/*.map",
       "!**/test/**",
+      "!**/tests/**",
+      "!**/example/**",
+      "!**/examples/**",
       "!**/docs/**",
       "!**/*.d.ts",
-      "!**/*.ts"
+      "!**/*.ts",
+      "!**/*.d.mts"
     ],
     "asarUnpack": [
-      "node_modules/cpu-features/**/*.node",
       "node_modules/ssh2/**/*.node"
     ],
     "compression": "maximum"

@@ -66,6 +66,8 @@ ipcMain.handle('ftp:connect', async function (_event, profile) {
         host: profile.host,
         port: profile.port || 22,
         username: profile.username,
+        readyTimeout: 10000,
+        retries: 0,
       };
 
       if (profile.authMethod === 'privateKey' || profile.authMethod === 'passwordAndKey') {
@@ -78,25 +80,67 @@ ipcMain.handle('ftp:connect', async function (_event, profile) {
         connectOpts.password = profile.password;
       }
 
-      await sftpClient.connect(connectOpts);
+      try {
+        await sftpClient.connect(connectOpts);
+      } catch (sftpErr) {
+        var sftpMsg = sftpErr.message || '';
+        if (sftpMsg.indexOf('handshake') >= 0 || sftpMsg.indexOf('Timed out') >= 0) {
+          throw new Error('SFTP 연결 시간 초과 - 호스트/포트 또는 프로토콜(FTP↔SFTP)을 확인하세요');
+        }
+        if (sftpMsg.indexOf('authentication') >= 0 || sftpMsg.indexOf('All configured') >= 0) {
+          throw new Error('SFTP 인증 실패 - 사용자/비밀번호를 확인하세요');
+        }
+        if (sftpMsg.indexOf('ECONNREFUSED') >= 0) {
+          throw new Error('연결 거부 - 호스트/포트를 확인하세요');
+        }
+        if (sftpMsg.indexOf('ENOTFOUND') >= 0) {
+          throw new Error('호스트를 찾을 수 없음 - 주소를 확인하세요');
+        }
+        throw sftpErr;
+      }
       currentProtocol = 'sftp';
       return { success: true, protocol: 'sftp' };
     } else {
-      ftpClient = new ftp.Client();
+      ftpClient = new ftp.Client(10000);
       ftpClient.ftp.verbose = false;
-      await ftpClient.access({
+      var accessOpts = {
         host: profile.host,
         port: profile.port || 21,
         user: profile.username,
         password: profile.password,
         secure: false,
-      });
+      };
+      try {
+        await ftpClient.access(accessOpts);
+      } catch (ftpErr) {
+        var ftpMsg = ftpErr.message || '';
+        if (ftpMsg.indexOf('Timeout') >= 0 || ftpMsg.indexOf('timeout') >= 0) {
+          // Retry with implicit TLS
+          ftpClient.close();
+          ftpClient = new ftp.Client(10000);
+          ftpClient.ftp.verbose = false;
+          accessOpts.secure = 'implicit';
+          try {
+            await ftpClient.access(accessOpts);
+          } catch (_retryErr) {
+            throw new Error('FTP 연결 시간 초과 - 호스트/포트 또는 프로토콜(FTP↔SFTP)을 확인하세요');
+          }
+        } else if (ftpMsg.indexOf('Login') >= 0 || ftpMsg.indexOf('530') >= 0) {
+          throw new Error('FTP 인증 실패 - 사용자/비밀번호를 확인하세요');
+        } else if (ftpMsg.indexOf('ECONNREFUSED') >= 0) {
+          throw new Error('연결 거부 - 호스트/포트를 확인하세요');
+        } else if (ftpMsg.indexOf('ENOTFOUND') >= 0) {
+          throw new Error('호스트를 찾을 수 없음 - 주소를 확인하세요');
+        } else {
+          throw ftpErr;
+        }
+      }
       currentProtocol = 'ftp';
       return { success: true, protocol: 'ftp' };
     }
   } catch (err) {
     await disconnectCurrent();
-    throw new Error('연결 실패: ' + err.message);
+    throw new Error(err.message.startsWith('연결 실패') ? err.message : '연결 실패: ' + err.message);
   }
 });
 
@@ -134,8 +178,8 @@ ipcMain.handle('ftp:listDirectory', async function (_event, remotePath) {
         fullPath: remotePath.replace(/\/+$/, '') + '/' + item.name,
         isDirectory: item.type === ftp.FileType.Directory,
         size: item.size || 0,
-        lastModified: item.modifiedAt ? item.modifiedAt.toISOString() : new Date().toISOString(),
-        permissions: item.rawModifiedAt || '',
+        lastModified: parseFtpDate(item.modifiedAt, item.rawModifiedAt),
+        permissions: formatFtpPermissions(item.permissions, item.type === ftp.FileType.Directory),
       });
     }
   } else if (currentProtocol === 'sftp') {
@@ -163,6 +207,43 @@ ipcMain.handle('ftp:listDirectory', async function (_event, remotePath) {
 
   return items;
 });
+
+function parseFtpDate(modifiedAt, rawModifiedAt) {
+  // modifiedAt is set by MLSD responses (modern servers)
+  if (modifiedAt instanceof Date && !isNaN(modifiedAt.getTime())) {
+    return modifiedAt.toISOString();
+  }
+  if (!rawModifiedAt) return '';
+  // "Mon DD HH:MM" format (no year) - must check BEFORE generic Date parse
+  var matchTime = rawModifiedAt.match(/^(\w+)\s+(\d+)\s+(\d+):(\d+)$/);
+  if (matchTime) {
+    var now = new Date();
+    var dateStr = matchTime[1] + ' ' + matchTime[2] + ', ' + now.getFullYear() + ' ' + matchTime[3] + ':' + matchTime[4] + ':00';
+    var parsed = new Date(dateStr);
+    if (!isNaN(parsed.getTime())) {
+      if (parsed > now) parsed.setFullYear(now.getFullYear() - 1);
+      return parsed.toISOString();
+    }
+  }
+  // "Mon DD YYYY" format (with year)
+  var matchYear = rawModifiedAt.match(/^(\w+)\s+(\d+)\s+(\d{4})$/);
+  if (matchYear) {
+    var parsed2 = new Date(matchYear[1] + ' ' + matchYear[2] + ', ' + matchYear[3]);
+    if (!isNaN(parsed2.getTime())) return parsed2.toISOString();
+  }
+  return '';
+}
+
+function formatFtpPermissions(perms, isDir) {
+  // basic-ftp provides permissions as { user: number, group: number, world: number }
+  // where each is a bitmask: Read=4, Write=2, Execute=1
+  if (perms == null) return '';
+  var prefix = isDir ? 'd' : '-';
+  function triplet(n) {
+    return ((n & 4) ? 'r' : '-') + ((n & 2) ? 'w' : '-') + ((n & 1) ? 'x' : '-');
+  }
+  return prefix + triplet(perms.user || 0) + triplet(perms.group || 0) + triplet(perms.world || 0);
+}
 
 function formatSftpPermissions(rights, isDir) {
   var prefix = isDir ? 'd' : '-';

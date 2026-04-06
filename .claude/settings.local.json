@@ -18,7 +18,23 @@
       "Bash(git --version)",
       "Bash(git init:*)",
       "Bash(git add:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(git commit:*)",
+      "Bash(git remote:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(wc -l \"c:\\\\projects\\\\maddit_ftp_client\\\\src\\\\components\"*.tsx)",
+      "Bash(wc -l *.tsx)",
+      "Bash(ls c:/projects/maddit_ftp_client/public/icon.*)",
+      "Bash(node -e ':*)",
+      "Bash(node scripts/generate-icon.js)",
+      "Bash(xargs ls:*)",
+      "Bash(ls node_modules/ssh2/lib/*.js)",
+      "Bash(du -sh node_modules/ssh2-sftp-client/test node_modules/ssh2-sftp-client/example node_modules/ssh2-sftp-client/README* node_modules/basic-ftp/test)",
+      "Bash(npx electron-builder:*)",
+      "Bash(du -sh resources/ locales/ *.dll *.exe)",
+      "Bash(rm -rf release/win-unpacked)",
+      "Bash(rm -f release/*.exe release/*.blockmap release/*.yml)"
     ]
   }
 }

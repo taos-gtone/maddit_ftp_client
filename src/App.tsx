@@ -5,12 +5,14 @@ import FilePanel from './components/FilePanel';
 import TransferQueue from './components/TransferQueue';
 import ConnectionManager from './components/ConnectionManager';
 import InputDialog from './components/InputDialog';
+import BannerAd from './components/BannerAd';
+import BookmarkEditDialog from './components/BookmarkEditDialog';
 import { useLocalFiles } from './hooks/useLocalFiles';
 import { useRemoteFiles } from './hooks/useRemoteFiles';
 import { useTransfer } from './hooks/useTransfer';
 import { useSplitPane } from './hooks/useSplitPane';
 import type { ContextMenuAction } from './components/FilePanel';
-import type { ConnectionProfile, FileItem, ProtocolType, Bookmark, BannerItem } from './types/index';
+import type { ConnectionProfile, FileItem, ProtocolType, Bookmark } from './types/index';
 
 export default function App() {
   const local = useLocalFiles();
@@ -27,7 +29,11 @@ export default function App() {
   const currentProfileRef = useRef<ConnectionProfile | null>(null);
 
   // Input dialog state
-  const [inputDialog, setInputDialog] = useState({ isOpen: false, title: '', message: '', target: '' as 'localDir' | 'remoteDir' | 'bookmark' });
+  const [inputDialog, setInputDialog] = useState({ isOpen: false, title: '', message: '', defaultValue: '', target: '' as 'localDir' | 'remoteDir' });
+
+  // Bookmark edit dialog state
+  const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
+  const [bookmarkDialogMode, setBookmarkDialogMode] = useState<'add' | 'edit'>('edit');
 
   // Menu dropdowns
   const [showFileMenu, setShowFileMenu] = useState(false);
@@ -41,26 +47,8 @@ export default function App() {
   const [localSelection, setLocalSelection] = useState<FileItem[]>([]);
   const [remoteSelection, setRemoteSelection] = useState<FileItem[]>([]);
 
-  // Banner
-  const [banner, setBanner] = useState<{ imageUrl: string; clickUrl: string } | null>(null);
-  const bannerFetched = useRef(false);
-
   useEffect(() => {
     window.electronAPI.loadBookmarks().then(setBookmarks);
-
-    if (!bannerFetched.current) {
-      bannerFetched.current = true;
-      window.electronAPI.fetchBanners()
-        .then((data: unknown) => {
-          const d = data as Record<string, unknown>;
-          const list = Array.isArray(d) ? d : (d?.data ?? d?.list ?? d?.banners) as unknown[];
-          if (Array.isArray(list) && list.length > 0) {
-            const item = list[0] as Record<string, string>;
-            if (item.imageUrl) setBanner({ imageUrl: item.imageUrl, clickUrl: item.clickUrl || '' });
-          }
-        })
-        .catch(() => {});
-    }
   }, []);
 
   function closeAllMenus() {
@@ -289,11 +277,11 @@ export default function App() {
 
   // ─── Directory creation ───
   const handleLocalCreateDir = useCallback(() => {
-    setInputDialog({ isOpen: true, title: '새 폴더', message: '폴더 이름을 입력하세요:', target: 'localDir' });
+    setInputDialog({ isOpen: true, title: '새 폴더', message: '폴더 이름을 입력하세요:', defaultValue: '', target: 'localDir' });
   }, []);
 
   const handleRemoteCreateDir = useCallback(() => {
-    setInputDialog({ isOpen: true, title: '새 폴더', message: '폴더 이름을 입력하세요:', target: 'remoteDir' });
+    setInputDialog({ isOpen: true, title: '새 폴더', message: '폴더 이름을 입력하세요:', defaultValue: '', target: 'remoteDir' });
   }, []);
 
   const handleInputConfirm = useCallback(async (value: string) => {
@@ -302,17 +290,6 @@ export default function App() {
         await local.createDirectory(value);
       } else if (inputDialog.target === 'remoteDir') {
         await remote.createDirectory(value);
-      } else if (inputDialog.target === 'bookmark') {
-        const bookmark: Bookmark = {
-          id: crypto.randomUUID(),
-          name: value,
-          profileId: currentProfileRef.current?.id || '',
-          localPath: local.currentPath,
-          remotePath: remote.currentPath,
-        };
-        const updated = [...bookmarks, bookmark];
-        setBookmarks(updated);
-        await window.electronAPI.saveBookmarks(updated);
       }
     } catch (err: unknown) {
       setStatusText(`오류: ${(err as Error).message}`);
@@ -321,24 +298,44 @@ export default function App() {
   }, [inputDialog.target, local, remote, bookmarks]);
 
   // ─── Delete ───
-  const handleLocalDelete = useCallback(async (item: FileItem) => {
-    if (item.isParentDirectory) return;
-    if (!window.confirm(`'${item.name}'을(를) 삭제하시겠습니까?`)) return;
-    try { await local.deleteItem(item); } catch (err: unknown) { setStatusText(`삭제 실패: ${(err as Error).message}`); }
+  const handleLocalDelete = useCallback(async (items: FileItem[]) => {
+    const targets = items.filter(i => !i.isParentDirectory);
+    if (targets.length === 0) return;
+    const msg = targets.length === 1
+      ? `'${targets[0].name}'${targets[0].isDirectory ? ' 폴더와 하위 항목을' : '을(를)'} 삭제하시겠습니까?`
+      : `${targets.length}개 항목 (폴더 ${targets.filter(i => i.isDirectory).length}개, 파일 ${targets.filter(i => !i.isDirectory).length}개)을 삭제하시겠습니까?\n\n폴더는 하위 항목을 포함하여 삭제됩니다.`;
+    if (!window.confirm(msg)) return;
+    for (const item of targets) {
+      try { await local.deleteItem(item); } catch (err: unknown) { setStatusText(`삭제 실패: ${(err as Error).message}`); }
+    }
   }, [local]);
 
-  const handleRemoteDelete = useCallback(async (item: FileItem) => {
-    if (item.isParentDirectory) return;
-    if (!window.confirm(`'${item.name}'을(를) 삭제하시겠습니까?`)) return;
-    try { await remote.deleteItem(item); } catch (err: unknown) { setStatusText(`삭제 실패: ${(err as Error).message}`); }
+  const handleRemoteDelete = useCallback(async (items: FileItem[]) => {
+    const targets = items.filter(i => !i.isParentDirectory);
+    if (targets.length === 0) return;
+    const msg = targets.length === 1
+      ? `'${targets[0].name}'${targets[0].isDirectory ? ' 폴더와 하위 항목을' : '을(를)'} 삭제하시겠습니까?`
+      : `${targets.length}개 항목 (폴더 ${targets.filter(i => i.isDirectory).length}개, 파일 ${targets.filter(i => !i.isDirectory).length}개)을 삭제하시겠습니까?\n\n폴더는 하위 항목을 포함하여 삭제됩니다.`;
+    if (!window.confirm(msg)) return;
+    for (const item of targets) {
+      try { await remote.deleteItem(item); } catch (err: unknown) { setStatusText(`삭제 실패: ${(err as Error).message}`); }
+    }
   }, [remote]);
 
   // ─── Bookmarks ───
   const handleAddBookmark = useCallback(() => {
     if (!isConnected) return;
-    setInputDialog({ isOpen: true, title: '북마크 추가', message: '북마크 이름을 입력하세요:', target: 'bookmark' });
+    setBookmarkDialogMode('add');
+    setEditingBookmark({
+      id: crypto.randomUUID(),
+      name: '',
+      profileId: currentProfileRef.current?.id || '',
+      localPath: local.currentPath,
+      remotePath: remote.currentPath,
+      syncBrowsing: false,
+    });
     closeAllMenus();
-  }, [isConnected]);
+  }, [isConnected, local.currentPath, remote.currentPath]);
 
   const handleNavigateBookmark = useCallback(async (bookmark: Bookmark) => {
     isSyncNavigatingRef.current = true;
@@ -348,11 +345,30 @@ export default function App() {
         if (exists) local.loadDirectory(bookmark.localPath);
       }
       if (isConnected && bookmark.remotePath) await remote.loadDirectory(bookmark.remotePath);
-      setSyncBrowsing(true);
-      setStatusText(`북마크 '${bookmark.name}' - 탐색 동기화 활성화`);
+      const sync = bookmark.syncBrowsing ?? true;
+      setSyncBrowsing(sync);
+      setStatusText(`북마크 '${bookmark.name}' - 탐색 동기화 ${sync ? '활성화' : '비활성화'}`);
     } finally { isSyncNavigatingRef.current = false; }
     closeAllMenus();
   }, [isConnected, local, remote]);
+
+  const handleEditBookmark = useCallback((bookmark: Bookmark) => {
+    setBookmarkDialogMode('edit');
+    setEditingBookmark(bookmark);
+    closeAllMenus();
+  }, []);
+
+  const handleSaveBookmark = useCallback(async (saved: Bookmark) => {
+    let newBookmarks: Bookmark[];
+    if (bookmarkDialogMode === 'add') {
+      newBookmarks = [...bookmarks, saved];
+    } else {
+      newBookmarks = bookmarks.map(b => b.id === saved.id ? saved : b);
+    }
+    setBookmarks(newBookmarks);
+    await window.electronAPI.saveBookmarks(newBookmarks);
+    setEditingBookmark(null);
+  }, [bookmarks, bookmarkDialogMode]);
 
   const handleDeleteBookmark = useCallback(async (bookmark: Bookmark) => {
     const updated = bookmarks.filter(b => b.id !== bookmark.id);
@@ -399,11 +415,7 @@ export default function App() {
     } else if (action === 'newFolder') {
       handleLocalCreateDir();
     } else if (action === 'delete') {
-      for (const item of items) {
-        if (item.isParentDirectory) continue;
-        if (!window.confirm(`'${item.name}'을(를) 삭제하시겠습니까?`)) continue;
-        try { await local.deleteItem(item); } catch (err: unknown) { setStatusText(`삭제 실패: ${(err as Error).message}`); }
-      }
+      handleLocalDelete(items);
     } else if (action === 'refresh') {
       local.refresh();
     }
@@ -416,19 +428,11 @@ export default function App() {
     } else if (action === 'newFolder') {
       handleRemoteCreateDir();
     } else if (action === 'delete') {
-      for (const item of items) {
-        if (item.isParentDirectory) continue;
-        if (!window.confirm(`'${item.name}'을(를) 삭제하시겠습니까?`)) continue;
-        try { await remote.deleteItem(item); } catch (err: unknown) { setStatusText(`삭제 실패: ${(err as Error).message}`); }
-      }
+      handleRemoteDelete(items);
     } else if (action === 'refresh') {
       remote.refresh();
     }
   }, [handleDownload, handleRemoteCreateDir, remote]);
-
-  const handleBannerClick = useCallback(() => {
-    if (banner?.clickUrl) window.electronAPI.openExternal(banner.clickUrl);
-  }, [banner]);
 
   const anyMenuOpen = showFileMenu || showBookmarkMenu || showHelpMenu;
 
@@ -493,8 +497,15 @@ export default function App() {
                     {b.name}
                   </button>
                   <button
+                    onClick={() => handleEditBookmark(b)}
+                    className="px-1.5 text-primary opacity-0 group-hover:opacity-100 text-xs"
+                    title="수정"
+                  >
+                    &#9998;
+                  </button>
+                  <button
                     onClick={() => handleDeleteBookmark(b)}
-                    className="px-2 text-error opacity-0 group-hover:opacity-100 text-xs"
+                    className="px-1.5 text-error opacity-0 group-hover:opacity-100 text-xs"
                     title="삭제"
                   >
                     x
@@ -600,21 +611,7 @@ export default function App() {
       </div>
 
       {/* Banner ad - 50px */}
-      <div className="h-[50px] bg-surface border-t border-border flex items-center justify-center shrink-0 overflow-hidden">
-        {banner ? (
-          <img
-            src={banner.imageUrl}
-            alt="ad"
-            className="h-full w-full object-contain cursor-pointer"
-            onClick={handleBannerClick}
-          />
-        ) : (
-          <div className="text-text-muted text-xs text-center">
-            <p className="font-medium">AD SPACE</p>
-            <p className="mt-0.5">728 x 90</p>
-          </div>
-        )}
-      </div>
+      <BannerAd />
 
       {/* Status bar */}
       <div className="h-6 bg-statusbar flex items-center text-white text-xs shrink-0">
@@ -640,9 +637,17 @@ export default function App() {
       <InputDialog
         title={inputDialog.title}
         message={inputDialog.message}
+        defaultValue={inputDialog.defaultValue}
         isOpen={inputDialog.isOpen}
         onConfirm={handleInputConfirm}
         onCancel={() => setInputDialog(prev => ({ ...prev, isOpen: false }))}
+      />
+      <BookmarkEditDialog
+        bookmark={editingBookmark}
+        isOpen={editingBookmark !== null}
+        mode={bookmarkDialogMode}
+        onSave={handleSaveBookmark}
+        onCancel={() => setEditingBookmark(null)}
       />
 
       {/* Click outside menus */}
